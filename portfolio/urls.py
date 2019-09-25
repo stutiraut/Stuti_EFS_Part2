@@ -22,7 +22,8 @@ urlpatterns = [
     path('bond/create/', views.bond_new, name='bond_new'),
     path('bond/<int:pk>/edit/', views.bond_edit, name='bond_edit'),
     path('bond/<int:pk>/delete/', views.bond_delete, name='bond_delete'),
-    path('customer/<int:pk>/summary/', views.summary, name='summary'),
+    #path('customer/<int:pk>/summary/', views.summary, name='summary'),
+    path('customer/<int:pk>/portfolio/', views.portfolio, name='portfolio'),
     url(r'^customers_json/', views.CustomerList.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)

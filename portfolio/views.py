@@ -4,11 +4,12 @@ from .models import *
 from .forms import *
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
-from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import CustomerSerializer
+from django.db.models import Sum
+
 
 
 
@@ -185,25 +186,31 @@ def bond_delete(request, pk):
     return redirect('portfolio:bond_list')
 
 
-
 @login_required
-def summary(request, pk):
-    customer = get_object_or_404(Customer, pk=pk)
-    customers = Customer.objects.filter(created_date__lte=timezone.now())
-    stocks = Stock.objects.filter(customer=pk)
-    investments = Investment.objects.filter(customer=pk)
-    bonds = Bond.objects.filter(customer=pk)
-    sum_purchase_price = Stock.objects.filter(customer=pk).aggregate(Sum('purchase_price'))
-    sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
-    sum_purchase_price = Bond.objects.filter(customer=pk).aggregate(Sum('purchase_price'))
-    return render(request, 'portfolio/summary.html', {'customers': customers,
-                                                    'stocks': stocks,
-                                                    'investments': investments,
-                                                    'bonds': bonds,
-                                                    'sum_purchase_price': sum_purchase_price,
-                                                    'sum_recent_value': sum_recent_value,
-                                                    'sum_purchase_price': sum_purchase_price,})
+def portfolio(request,pk):
+   customer = get_object_or_404(Customer, pk=pk)
+   customers = Customer.objects.filter(created_date__lte=timezone.now())
+   investments =Investment.objects.filter(customer=pk)
+   stocks = Stock.objects.filter(customer=pk)
+   sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
+   sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
+   #overall_investment_results = sum_recent_value-sum_acquired_value
+   # Initialize the value of the stocks
+   sum_current_stocks_value = 0
+   sum_of_initial_stock_value = 0
 
+   # Loop through each stock and add the value to the total
+   for stock in stocks:
+        sum_current_stocks_value += stock.current_stock_value()
+        sum_of_initial_stock_value += stock.initial_stock_value()
+
+   return render(request, 'portfolio/portfolio.html', {'customers': customers,
+                                                       'investments': investments,
+                                                       'stocks': stocks,
+                                                       'sum_acquired_value': sum_acquired_value,
+                                                       'sum_recent_value': sum_recent_value,
+                                                        'sum_current_stocks_value': sum_current_stocks_value,
+                                                        'sum_of_initial_stock_value': sum_of_initial_stock_value,})
 
 # List at the end of the views.py
 # Lists all customers
@@ -213,4 +220,3 @@ class CustomerList(APIView):
         customers_json = Customer.objects.all()
         serializer = CustomerSerializer(customers_json, many=True)
         return Response(serializer.data)
-
